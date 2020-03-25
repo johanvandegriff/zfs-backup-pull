@@ -12,9 +12,7 @@ remote_pool="brick"
 ignore_datasets="apt-mirror
 offline
 tmp
-nextcloud
-storj
-osbackup"
+storj"
 
 #need these permissions for this script
 #sudo zfs allow johanv compression,mountpoint,create,mount,receive tool
