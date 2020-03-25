@@ -70,11 +70,13 @@ do
   until zfs list -t snapshot | grep "$dataset@$new_snapshot"
   do
     echo "receiving \"$dataset\" from \"$remote\", old: \"$old_snapshot\"" | tee -a "$log"
-    if [[ -z "$old" ]]; then
+    if [[ -z "$old_snapshot" ]]; then
+        echo "receiving for the first time, not incremental" | tee -a "$log"
         ssh -o MACs=hmac-md5 -p "$port" "$remote" \
             "zfs send -R ${remote_pool}/${dataset}@${new_snapshot}" | \
             pv | zfs recv -Fdu "$local_pool"
     else
+        echo "receiving incremental" | tee -a "$log"
         ssh -o MACs=hmac-md5 -p "$port" "$remote" \
             "zfs send -R -I ${remote_pool}/${dataset}@${old_snapshot} ${remote_pool}/${dataset}@${new_snapshot}" | \
             pv | zfs recv -Fdu "$local_pool"
