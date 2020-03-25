@@ -16,6 +16,9 @@ nextcloud
 storj
 osbackup"
 
+#need to allow at least receive permission for this script
+#sudo zfs allow johanv receive,mount,snapshot tool
+
 echo "Getting list of datasets from the server..." | tee -a "$log"
 datasets=`ssh -o MACs=hmac-md5 -p "$port" "$remote" \
   "zfs list" | grep "${remote_pool}/" | cut -d' ' -f1 | cut -d/ -f2`
@@ -70,11 +73,11 @@ do
     if [[ -z "$old" ]]; then
         ssh -o MACs=hmac-md5 -p "$port" "$remote" \
             "zfs send -R ${remote_pool}/${dataset}@${new_snapshot}" | \
-            pv | sudo zfs recv -Fdu "$local_pool"
+            pv | zfs recv -Fdu "$local_pool"
     else
         ssh -o MACs=hmac-md5 -p "$port" "$remote" \
             "zfs send -R -I ${remote_pool}/${dataset}@${old_snapshot} ${remote_pool}/${dataset}@${new_snapshot}" | \
-            pv | sudo zfs recv -Fdu "$local_pool"
+            pv | zfs recv -Fdu "$local_pool"
     fi
   done
 done
