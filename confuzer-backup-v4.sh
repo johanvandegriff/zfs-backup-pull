@@ -3,15 +3,18 @@ echo 'Put "-n" to skip the snapshot'
 
 snapshot_file="$HOME/snapshot.txt"
 log="$HOME/backup.log"
-remote="loser@confuzer.cloud"
+remote="johanv@confuzer.cloud"
 remote_snapshot_script="/home/loser/make-snapshot.sh"
 remote_send_script="/home/loser/send-incremental.sh"
 port=2230
-local_pool="lump"
+local_pool="tool"
 remote_pool="brick"
 ignore_datasets="apt-mirror
 offline
-tmp"
+tmp
+nextcloud
+storj
+osbackup"
 
 echo "Getting list of datasets from the server..." | tee -a "$log"
 datasets=`ssh -o MACs=hmac-md5 -p "$port" "$remote" \
@@ -34,7 +37,7 @@ echo "Starting new round of shots. Snapshots! date: `date`" | tee -a "$log"
 
 echo "making snapshot of \"$datasets_not_ignored\" on \"$remote\" current time: `date`" | tee -a "$log"
 new_snapshot=`ssh -o MACs=hmac-md5 -p "$port" "$remote" "date +%Y-%m-%d_%H:%M:%S"`_backup
-for dataset in datasets_not_ignored
+for dataset in $datasets_not_ignored
 do
   echo "snapshotting $dataset"
   ssh -o MACs=hmac-md5 -p "$port" "$remote" \
@@ -64,9 +67,15 @@ do
   until zfs list -t snapshot | grep "$dataset@$new_snapshot"
   do
     echo "receiving \"$dataset\" from \"$remote\", old: \"$old_snapshot\"" | tee -a "$log"
-    ssh -o MACs=hmac-md5 -p "$port" "$remote" \
-      "zfs send -R -I ${remote_pool}/${dataset}@${old_snapshot} ${remote_pool}/${dataset}@${new_snapshot}" | \
-      pv | zfs recv -Fdu "$local_pool"
+    if [[ -z "$old" ]]; then
+        ssh -o MACs=hmac-md5 -p "$port" "$remote" \
+            "zfs send -R ${remote_pool}/${dataset}@${new_snapshot}" | \
+            pv | sudo zfs recv -Fdu "$local_pool"
+    else
+        ssh -o MACs=hmac-md5 -p "$port" "$remote" \
+            "zfs send -R -I ${remote_pool}/${dataset}@${old_snapshot} ${remote_pool}/${dataset}@${new_snapshot}" | \
+            pv | sudo zfs recv -Fdu "$local_pool"
+    fi
   done
 done
 ### END BACKUP ###
