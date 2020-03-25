@@ -16,8 +16,8 @@ nextcloud
 storj
 osbackup"
 
-#need to allow at least receive permission for this script
-#sudo zfs allow johanv receive,mount,snapshot tool
+#need these permissions for this script
+#sudo zfs allow johanv compression,mountpoint,create,mount,receive tool
 
 echo "Getting list of datasets from the server..." | tee -a "$log"
 datasets=`ssh -o MACs=hmac-md5 -p "$port" "$remote" \
