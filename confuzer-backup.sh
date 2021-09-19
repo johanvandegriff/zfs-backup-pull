@@ -11,6 +11,8 @@ ignore_datasets="tmp
 storj
 nfs-share"
 
+export TZ=UTC
+
 #need these permissions for this script
 #sudo zfs allow johanv compression,mountpoint,create,mount,receive tool
 
