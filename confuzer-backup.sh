@@ -4,15 +4,12 @@ echo 'Put "-n" to skip the snapshot'
 snapshot_file="$HOME/snapshot.txt"
 log="$HOME/backup.log"
 remote="johanv@confuzer.cloud"
-remote_snapshot_script="/home/loser/make-snapshot.sh"
-remote_send_script="/home/loser/send-incremental.sh"
 port=2230
 local_pool="tool"
 remote_pool="brick"
-ignore_datasets="apt-mirror
-offline
-tmp
-storj"
+ignore_datasets="tmp
+storj
+nfs-share"
 
 #need these permissions for this script
 #sudo zfs allow johanv compression,mountpoint,create,mount,receive tool
