@@ -5,16 +5,15 @@ snapshot_file="$HOME/snapshot.txt"
 log="$HOME/backup.log"
 remote="johanv@confuzer.cloud"
 port=2230
-local_pool="tool"
+local_pool="stack"
 remote_pool="brick"
 ignore_datasets="tmp
-storj
-nfs-share"
+storj"
 
 export TZ=UTC
 
 #need these permissions for this script
-#sudo zfs allow johanv compression,mountpoint,create,mount,receive tool
+#sudo zfs allow user compression,mountpoint,create,mount,receive stack
 
 echo "Getting list of datasets from the server..." | tee -a "$log"
 datasets=`ssh -o MACs=hmac-md5 -p "$port" "$remote" \
@@ -61,11 +60,10 @@ new_snapshot=`cat "$snapshot_file"`
 
 for dataset in $datasets_not_ignored
 do
-  #https://stackoverflow.com/questions/41328041/shell-script-to-check-most-recent-zfs-snapshot#41329639
-  old_snapshot=`zfs list -t snapshot -o name,creation -s creation -r "${local_pool}/${dataset}" | tail -1 | cut -d ' ' -f 1 | cut -d '@' -f 2`
-
   until zfs list -t snapshot | grep "$dataset@$new_snapshot"
   do
+    #https://stackoverflow.com/questions/41328041/shell-script-to-check-most-recent-zfs-snapshot#41329639
+    old_snapshot=`zfs list -t snapshot -o name,creation -s creation -r "${local_pool}/${dataset}" | tail -1 | cut -d ' ' -f 1 | cut -d '@' -f 2`
     echo "receiving \"$dataset\" from \"$remote\", old: \"$old_snapshot\"" | tee -a "$log"
     if [[ -z "$old_snapshot" ]]; then
         echo "receiving for the first time, not incremental" | tee -a "$log"
@@ -78,6 +76,9 @@ do
             "zfs send -R -I ${remote_pool}/${dataset}@${old_snapshot} ${remote_pool}/${dataset}@${new_snapshot}" | \
             pv | zfs recv -Fdu "$local_pool"
     fi
+    date | tee -a "$log"
   done
 done
 ### END BACKUP ###
+
+echo "Done! date: `date`" | tee -a "$log"
